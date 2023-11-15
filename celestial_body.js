@@ -6,9 +6,10 @@ export class CelestialBody{
     orbitalPara;
     orbitalCenter;
     ring;
+    name;
     
 
-    constructor( geometry, material, orbitalPara, orbitalCenter = null ){
+    constructor( geometry, material, orbitalPara, orbitalCenter = null, name){
         
         this.geometry = geometry;
         this.material = material;
@@ -18,6 +19,7 @@ export class CelestialBody{
         this.orbitalCenter = orbitalCenter;
         this.body.castShadow = true;
         this.body.receiveShadow = true;
+        this.name = name;
         
         if (this.orbitalPara && this.orbitalCenter){
             this.ring = new THREE.Mesh( new THREE.RingGeometry( this.orbitalPara.distance, this.orbitalPara.distance +0.03,128 ) , 

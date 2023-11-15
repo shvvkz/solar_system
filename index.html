@@ -14,6 +14,21 @@
     </head>
     <body style="overflow:hidden;">
 	<p id="toolbar">
+		<input type = "range" id="globalSpeed" value="1" step="1" min="0.001" max="75">
+		<button id="pause"> Pause </button>
+		<select id="planet">
+			<option value="sun">Sun</option>
+			<option value="mercure">Mercure</option>
+			<option value="venus">Venus</option>
+			<option value="earth">Earth</option>
+			<option value="moon">Moon</option>
+			<option value="mars">Mars</option>
+			<option value="jupiter">Jupiter</option>
+			<option value="saturn">Saturn</option>
+			<option value="titan">Titan</option>
+			<option value="uranus">Uranus</option>
+			<option value="neptune">Neptune</option>
+		</select>
 	</p>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.js"></script>
 	
@@ -29,7 +44,7 @@
 
 	// création du loader de texture
 	const loader = new THREE.TextureLoader();
-
+	var pause = false;
 	// création de la scène
 	var tic = 0;
 	var scene = new THREE.Scene();
@@ -58,23 +73,22 @@
 
 
 	
-	var sun =  new CelestialBody(new THREE.SphereGeometry(0.5, 128, 128), new THREE.MeshLambertMaterial({map: loader.load('texture/sun.jpg'),emissive: 0xffff00, emissiveIntensity: 0.6}), { speed: 0, distance:0,speedRotation:1})
-	var mercure = new CelestialBody(new THREE.SphereGeometry(0.1	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mercure.jpg')}), { speed:2.4,distance: 1.2,speedRotation:1.6, excentricity:0.205},sun)
-	var venus = new CelestialBody(new THREE.SphereGeometry(0.3	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/venus.jpg')}), {speed:-1.2,distance: 2.2,speedRotation:1.1,excentricity:0.006},sun)
-	var earth = new CelestialBody(new THREE.SphereGeometry(0.3	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/earth.jpg')}), {speed:0.6,distance: 3.5,speedRotation:0.6,excentricity:0.016},sun)
-	var mars = new CelestialBody(new THREE.SphereGeometry(0.15	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mars.jpg')}), {speed:0.3,distance: 4.4,speedRotation:0.7,excentricity:0.093},sun)
-	var jupiter = new CelestialBody(new THREE.SphereGeometry(0.38,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/jupiter.jpg')}), {speed:0.1,distance: 5.2,speedRotation:0.18,excentricity:0.048},sun)
-	var saturne = new CelestialBody(new THREE.SphereGeometry(0.35,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/saturn.jpg')}), {speed:0.05,distance: 6.6,speedRotation:0.3,excentricity:0.054},sun)
-	var titan = new CelestialBody(new THREE.SphereGeometry(0.05,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/titan.jpg')}), {speed:1.6,distance: 0.7,speedRotation:0.4,excentricity:0.0288},saturne)
-	var uranus = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/uranus.jpg')}), {speed:-0.08,distance: 8,speedRotation:0.5,excentricity:0.047},sun)
-	var neptune = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/neptune.jpg')}), {speed:0.03,distance: 9.1,speedRotation:0.7,excentricity:0.008},sun)
-	var moon = new CelestialBody(new THREE.SphereGeometry(0.05	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/moon.jpg')}), {speed:3.4,distance: 0.45,speedRotation:3.4,excentricity:0.0549},earth)
-	
+	var sun =  new CelestialBody(new THREE.SphereGeometry(0.5, 128, 128), new THREE.MeshLambertMaterial({map: loader.load('texture/sun.jpg'),emissive: 0xffff00, emissiveIntensity: 0.6}), { speed: 0, distance:0,speedRotation:1},null,'sun')
+	var mercure = new CelestialBody(new THREE.SphereGeometry(0.1	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mercure.jpg')}), { speed:2.4,distance: 1.2,speedRotation:1.6, excentricity:0.205},sun,'mercure')
+	var venus = new CelestialBody(new THREE.SphereGeometry(0.3	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/venus.jpg')}), {speed:-1.2,distance: 2.2,speedRotation:1.1,excentricity:0.006},sun,'venus')
+	var earth = new CelestialBody(new THREE.SphereGeometry(0.3	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/earth.jpg')}), {speed:0.6,distance: 3.5,speedRotation:0.6,excentricity:0.016},sun,'earth')
+	var mars = new CelestialBody(new THREE.SphereGeometry(0.15	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mars.jpg')}), {speed:0.3,distance: 4.4,speedRotation:0.7,excentricity:0.093},sun,'mars')
+	var jupiter = new CelestialBody(new THREE.SphereGeometry(0.38,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/jupiter.jpg')}), {speed:0.1,distance: 5.2,speedRotation:0.18,excentricity:0.048},sun,'jupiter')
+	var saturn = new CelestialBody(new THREE.SphereGeometry(0.35,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/saturn.jpg')}), {speed:0.05,distance: 6.6,speedRotation:0.3,excentricity:0.054},sun,'saturn')
+	var titan = new CelestialBody(new THREE.SphereGeometry(0.05,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/titan.jpg')}), {speed:1.6,distance: 0.7,speedRotation:0.4,excentricity:0.0288},saturn,'titan')
+	var uranus = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/uranus.jpg')}), {speed:-0.08,distance: 8,speedRotation:0.5,excentricity:0.047},sun,'uranus')
+	var neptune = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/neptune.jpg')}), {speed:0.03,distance: 9.1,speedRotation:0.7,excentricity:0.008},sun,'neptune')
+	var moon = new CelestialBody(new THREE.SphereGeometry(0.05	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/moon.jpg')}), {speed:3.4,distance: 0.45,speedRotation:3.4,excentricity:0.0549},earth,'moon')
 	//liste de noms des planetes et des satellite pour appliquer les fonctions moins répitivement.
-	const planetName = [mercure,venus,earth,mars,jupiter,saturne,uranus,neptune,moon,titan]
+	const planetName = [mercure,venus,earth,mars,jupiter,saturn,uranus,neptune,moon,titan]
 	const satelliteName = [moon,titan]
 
-	const planets = [mercure,venus,earth,mars,jupiter,saturne,uranus,neptune,moon,titan,sun]
+	const planets = [mercure,venus,earth,mars,jupiter,saturn,uranus,neptune,moon,titan,sun]
 
 	// ajout des planetes dans notre système solaire
 	for (var i=0;i<planetName.length;i++){
@@ -83,7 +97,7 @@
 	solarSystem.add(background.body)
 	solarSystem.add(sun.body)
 	scene.add(solarSystem);
-
+	//if (earth.body.position.x = 3.5)
 	//function render
 	let focusedPlanet = null;
 
@@ -99,8 +113,10 @@
 	    if (focusedPlanet === planet) {
 	        // Si la planète cliquée est déjà la planète centrée, arrêtez la rotation
 	        focusedPlanet = null;
+			document.getElementById("planet").value = 'sun'
 	    } else {
 	        // Sinon, centre la caméra sur la planète cliquée
+			document.getElementById("planet").value = planet.name
 	        focusOnPlanet(planet);
 	    }
 	}
@@ -144,6 +160,11 @@
         camera.position.y += (focusedPlanet.body.position.y - camera.position.y) * 0.05;
         camera.lookAt(focusedPlanet.body.position);
     }
+	else{
+		camera.position.x += (0 - camera.position.x) * 0.05;
+		camera.position.y += (0 - camera.position.y) * 0.05;
+		camera.lookAt(0,0,0);
+	}
 	satelliteName.forEach(element => {
 		element.addTo(solarSystem)
 	});
@@ -151,9 +172,13 @@
 		element.rotate();
 		element.move(tic);
 	});
+	if (pause)
+		tic +=0
+	else
+		tic += 1;
 	sun.rotate()
 	background.rotate()
-	 tic += 1;
+	
 	    renderer.render( scene, camera );
 	}
 	
@@ -173,6 +198,63 @@
 	        	camera.position.z += zoomFactor;
 	    }
 	}
+	var last_input_speed = 1;
+	//met un listener sur globalSpeed pour changer la vitesse de rotation des planètes
+	document.getElementById("globalSpeed").addEventListener("change", function(){
+		
+		var inputSpeed = document.getElementById("globalSpeed").value;
+
+		planetName.forEach(element=>{
+			element.orbitalPara.speed = (element.orbitalPara.speed/last_input_speed) * inputSpeed;
+		});
+		last_input_speed = inputSpeed;
+	});
+	document.getElementById("pause").addEventListener("click", function(){
+		pause = !pause;
+		if (pause)
+			document.getElementById("pause").innerHTML = "Resume"
+		else
+			document.getElementById("pause").innerHTML = "Pause"
+	});
+	//met un listener sur le selecteur de planète pour centrer la caméra sur la planète sélectionnée
+	document.getElementById("planet").addEventListener("change", function(){
+		var planet_select = document.getElementById("planet").value;
+		switch(planet_select){
+			case "sun":
+				focusOnPlanet(sun);
+				break;
+			case "mercure":
+				focusOnPlanet(mercure);
+				break;
+			case "venus":
+				focusOnPlanet(venus);
+				break;
+			case "earth":
+				focusOnPlanet(earth);
+				break;
+			case "moon":
+				focusOnPlanet(moon);
+				break;
+			case "mars":
+				focusOnPlanet(mars);
+				break;
+			case "jupiter":
+				focusOnPlanet(jupiter);
+				break;
+			case "saturn":
+				focusOnPlanet(saturn);
+				break;
+			case "titan":
+				focusOnPlanet(titan);
+				break;
+			case "uranus":
+				focusOnPlanet(uranus);
+				break;
+			case "neptune":
+				focusOnPlanet(neptune);
+				break;
+		}
+	});
 	</script>
     </body>
 </html> 
