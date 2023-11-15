@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<meta charset="utf-8">
+	<title>My first three.js app</title>
+	<style>
+	 body { margin: 0; }
+	 canvas { width: 100%; height: 90% }
+	 #toolbar { color: white; position: absolute; }
+	 #toolbar a { color: lightgrey; }
+	 #toolbar a:hover { text-decoration: none; }
+	</style>
+    </head>
+    <body style="overflow:hidden;">
+	<p id="toolbar">
+	</p>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.js"></script>
+	
+	<script type="module">
+	import {CelestialBody} from './celestial_body.js';	
+	import { setupOrbitControls, setupClickEvents } from './orbitEvents.js';
+	// import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/examples/jsm/controls/OrbitControls.js';
+
+
+
+
+
+
+	// création du loader de texture
+	const loader = new THREE.TextureLoader();
+
+	// création de la scène
+	var tic = 0;
+	var scene = new THREE.Scene();
+	var background = new CelestialBody(new THREE.SphereGeometry(50,32,32),new THREE.MeshLambertMaterial({map: loader.load('texture/space2.jpg'),emissive: 0x222222, emissiveIntensity: 1, side: THREE.DoubleSide }) , { speed: 0, distance:0,speedRotation:0.02});
+	background.body.receiveShadow = false;
+	//création de la camera
+	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+	camera.position.z = 13;
+
+	// création du renderer
+	var renderer = new THREE.WebGLRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.shadowMap.enabled = true;
+	document.body.appendChild( renderer.domElement );
+	
+
+	// création des lumières 
+	const light = new THREE.PointLight(0xffffff,1,0);
+	const alight = new THREE.AmbientLight(0xffffff, 0.4)
+	light.castShadow = true
+	light.position.set(0,0,0)
+	scene.add(light,alight);
+
+	//création de l'objet système solaire dans lequel on va mettre nos objets
+	var solarSystem = new THREE.Object3D();
+
+
+	
+	var sun =  new CelestialBody(new THREE.SphereGeometry(0.5, 128, 128), new THREE.MeshLambertMaterial({map: loader.load('texture/sun.jpg'),emissive: 0xffff00, emissiveIntensity: 0.6}), { speed: 0, distance:0,speedRotation:1})
+	var mercure = new CelestialBody(new THREE.SphereGeometry(0.1	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mercure.jpg')}), { speed:2.4,distance: 1.2,speedRotation:1.6, excentricity:0.205},sun)
+	var venus = new CelestialBody(new THREE.SphereGeometry(0.3	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/venus.jpg')}), {speed:-1.2,distance: 2.2,speedRotation:1.1,excentricity:0.006},sun)
+	var earth = new CelestialBody(new THREE.SphereGeometry(0.3	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/earth.jpg')}), {speed:0.6,distance: 3.5,speedRotation:0.6,excentricity:0.016},sun)
+	var mars = new CelestialBody(new THREE.SphereGeometry(0.15	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mars.jpg')}), {speed:0.3,distance: 4.4,speedRotation:0.7,excentricity:0.093},sun)
+	var jupiter = new CelestialBody(new THREE.SphereGeometry(0.38,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/jupiter.jpg')}), {speed:0.1,distance: 5.2,speedRotation:0.18,excentricity:0.048},sun)
+	var saturne = new CelestialBody(new THREE.SphereGeometry(0.35,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/saturn.jpg')}), {speed:0.05,distance: 6.6,speedRotation:0.3,excentricity:0.054},sun)
+	var titan = new CelestialBody(new THREE.SphereGeometry(0.05,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/titan.jpg')}), {speed:1.6,distance: 0.7,speedRotation:0.4,excentricity:0.0288},saturne)
+	var uranus = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/uranus.jpg')}), {speed:-0.08,distance: 8,speedRotation:0.5,excentricity:0.047},sun)
+	var neptune = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/neptune.jpg')}), {speed:0.03,distance: 9.1,speedRotation:0.7,excentricity:0.008},sun)
+	var moon = new CelestialBody(new THREE.SphereGeometry(0.05	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/moon.jpg')}), {speed:3.4,distance: 0.45,speedRotation:3.4,excentricity:0.0549},earth)
+	
+	//liste de noms des planetes et des satellite pour appliquer les fonctions moins répitivement.
+	const planetName = [mercure,venus,earth,mars,jupiter,saturne,uranus,neptune,moon,titan]
+	const satelliteName = [moon,titan]
+
+	const planets = [mercure,venus,earth,mars,jupiter,saturne,uranus,neptune,moon,titan,sun]
+
+	// ajout des planetes dans notre système solaire
+	for (var i=0;i<planetName.length;i++){
+		planetName[i].addTo(solarSystem)
+	}
+	solarSystem.add(background.body)
+	solarSystem.add(sun.body)
+	scene.add(solarSystem);
+
+	//function render
+	let focusedPlanet = null;
+
+	// Fonction pour centrer la caméra sur une planète
+	function focusOnPlanet(planet) {
+	    focusedPlanet = planet;
+	    const targetPosition = new THREE.Vector3(planet.body.position.x, planet.body.position.y, camera.position.z);
+	    camera.lookAt(planet.body.position);
+	}
+
+	// Gestionnaire d'événement pour le clic sur une planète
+	function handlePlanetClick(planet) {
+	    if (focusedPlanet === planet) {
+	        // Si la planète cliquée est déjà la planète centrée, arrêtez la rotation
+	        focusedPlanet = null;
+	    } else {
+	        // Sinon, centre la caméra sur la planète cliquée
+	        focusOnPlanet(planet);
+	    }
+	}
+
+	const raycaster = new THREE.Raycaster();
+	const mouse = new THREE.Vector2();
+
+	// Gestionnaire d'événement pour le clic de la souris
+	document.addEventListener('click', onMouseClick);
+
+	function onMouseClick(event) {
+	    // Mettez à jour les coordonnées de la souris
+	    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+	    // Définir le rayon dans la direction de la caméra
+	    raycaster.setFromCamera(mouse, camera);
+
+	    // Vérifier les intersections avec les objets
+	    const intersects = raycaster.intersectObjects(planets.map(planet => planet.body));
+
+	    // Si une intersection est détectée, gérer le clic sur la planète
+	    if (intersects.length > 0) {
+	        const clickedPlanet = planets.find(planet => planet.body === intersects[0].object);
+	        handlePlanetClick(clickedPlanet);
+	    }
+	}
+
+
+
+// ... (votre code existant)
+
+
+// Désactivez la rotation automatique (si vous le souhaitez)
+	function render() {
+	requestAnimationFrame( render );
+
+    if (focusedPlanet) {
+        // Si une planète est centrée, suivez sa position
+        camera.position.x += (focusedPlanet.body.position.x - camera.position.x) * 0.05;
+        camera.position.y += (focusedPlanet.body.position.y - camera.position.y) * 0.05;
+        camera.lookAt(focusedPlanet.body.position);
+    }
+	satelliteName.forEach(element => {
+		element.addTo(solarSystem)
+	});
+	planetName.forEach(element=>{
+		element.rotate();
+		element.move(tic);
+	});
+	sun.rotate()
+	background.rotate()
+	 tic += 1;
+	    renderer.render( scene, camera );
+	}
+	
+	render();
+	// ... (votre code existant)
+
+
+	//listener de notre souris pour zoomer et dézoomer
+	document.addEventListener('wheel', onMouseWheel);
+	function onMouseWheel(event) {
+	    var zoomFactor = 1;
+	    if (event.deltaY < 0) {
+			if(camera.position.z- zoomFactor >=1)
+	        	camera.position.z -= zoomFactor;
+	    } else {
+			if(camera.position.z- zoomFactor <47)
+	        	camera.position.z += zoomFactor;
+	    }
+	}
+	</script>
+    </body>
+</html> 
