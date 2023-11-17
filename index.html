@@ -6,13 +6,45 @@
 	<title>Solar System - Viggo Casciano</title>
 	<style>
 	 body { margin: 0; }
-	 canvas { width: 100%; height: 90% }
+	 canvas { width: 100%; height: 70% }
 	 #toolbar { color: white; position: absolute; }
 	 #toolbar a { color: lightgrey; }
 	 #toolbar a:hover { text-decoration: none; }
+	 #loader {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, #2980b9, #6dd5fa, #ffffff); /* Dégradé de couleurs pour le fond */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+			visibility: visible;
+			transition: all 0.6s ease;
+        }
+
+        /* Style pour le texte "Loading" */
+        #loader p {
+            font-size: 24px;
+            color: #fff;
+            text-transform: uppercase; /* Met le texte en majuscules */
+            margin-bottom: 20px;
+        }
+		.made_by{
+			color: white;
+			font-size: 10px;
+			margin: 0;
+		}
 	</style>
     </head>
     <body style="overflow:hidden;">
+		<div id="loader">
+			<p>Loading ...</p>
+			<div class="made_by"> Made by Viggo Casciano</div>
+		</div>
+		
+
 	<p id="toolbar" style="width:50vh;">
 		<input type = "range" id="globalSpeed" value="1" step="1" min="0.001" max="75">
 		<button id="pause"> Pause </button>
@@ -92,24 +124,6 @@
 	}
 	solarSystem.add(background.body)
 	solarSystem.add(sun.body)
-	const asteroids = createAsteroidBelt({ x: 0, y: 0 }, 6, 37); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids1 = createAsteroidBelt({ x: 0, y: 0 }, 5.8, 49); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids2 = createAsteroidBelt({ x: 0, y: 0 }, 6.7, 29); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids3 = createAsteroidBelt({ x: 0, y: 0 }, 5.4, 84); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids4 = createAsteroidBelt({ x: 0, y: 0 }, 5, 40); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids5 = createAsteroidBelt({ x: 0, y: 0 }, 6.2, 39); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids6 = createAsteroidBelt({ x: 0, y: 0 }, 6.4, 53); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids7 = createAsteroidBelt({ x: 0, y: 0 }, 5.6, 67); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids8 = createAsteroidBelt({ x: 0, y: 0 }, 5.9, 125); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	const asteroids9 = createAsteroidBelt({ x: 0, y: 0 }, 6.1, 91); // Exemple : centre (0, 0), rayon 10, 50 astéroïdes
-	
-
-	var tab_asteroid = [asteroids,asteroids1,asteroids2,asteroids3,asteroids4,asteroids5,asteroids6,asteroids7,asteroids8,asteroids9]
-	tab_asteroid.forEach(asteroid => {
-		asteroid.forEach(asteroidObject => {
-		    asteroidBelt.add(asteroidObject); // Ajoutez chaque objet d'astéroïde à la ceinture
-		});
-	});
 	//solarSystem.add(asteroidBelt);
 	scene.add(solarSystem);
 	//if (earth.body.position.x = 3.5)
@@ -193,7 +207,7 @@
 	    asteroid.position.set(x, y,0);
 
 	    // Échelle aléatoire pour chaque astéroïde
-	    const scale = Math.random() * 0.05 + 0.05;
+	    const scale = Math.random() * 0.08 + 0.08;
 	    asteroid.scale.set(scale, scale, scale);
 
 	    asteroidBelt2.add(asteroid);
@@ -205,16 +219,7 @@ scene.add(asteroidBelt2);
 	function render() {
 	requestAnimationFrame( render );
 
-	const orbitalSpeed = 0.0000003; // Vitesse orbitale
-    asteroidBelt2.children.forEach((asteroid, index) => {
-        const angle = tic * Math.PI * 2;
-        const radius = 0.01; // Ajuste le rayon de l'orbite
-		const distance_soleil_x = asteroid.position.x - sun.body.position.x
-		const distance_soleil_y = asteroid.position.y - sun.body.position.y
-        var x = (sun.body.position.x + distance_soleil_x * Math.cos(angle * orbitalSpeed) - distance_soleil_y * Math.sin(angle * orbitalSpeed));
-		var y = sun.body.position.y + distance_soleil_x * Math.sin(angle * orbitalSpeed) + distance_soleil_y * Math.cos(angle * orbitalSpeed);
-        asteroid.position.set(x, y, 0);
-    });
+	
 	
 
     if (focusedPlanet) {
@@ -235,15 +240,33 @@ scene.add(asteroidBelt2);
 		element.rotate();
 		element.move(tic);
 	});
-	if (pause)
+	if (pause){
 		tic +=0
-	else
+		asteroidBelt2.children.forEach((asteroid, index) => {
+			asteroid.position.x = asteroid.position.x
+			asteroid.position.y = asteroid.position.y
+		});
+	}
+	else{
 		tic += 1;
+		const orbitalSpeed = 0.0000003; // Vitesse orbitale
+    	asteroidBelt2.children.forEach((asteroid, index) => {
+        	const angle = 1000 * Math.PI * 2;
+        	const radius = 0.01; // Ajuste le rayon de l'orbite
+			const distance_soleil_x = asteroid.position.x - sun.body.position.x
+			const distance_soleil_y = asteroid.position.y - sun.body.position.y
+        	var x = (sun.body.position.x + distance_soleil_x * Math.cos(angle * orbitalSpeed) - distance_soleil_y * Math.sin(angle * orbitalSpeed));
+			var y = sun.body.position.y + distance_soleil_x * Math.sin(angle * orbitalSpeed) + distance_soleil_y * Math.cos(angle * orbitalSpeed);
+        	asteroid.position.set(x, y, 0);
+    	});	
+	}
 	sun.rotate()
 	background.rotate()
 	
 	    renderer.render( scene, camera );
 	}
+
+	
 	
 	render();
 	// ... (votre code existant)
@@ -329,6 +352,10 @@ function moveAsteroids(asteroidBelt,tic) {
     });
 }
 */
+window.addEventListener('load', () => {
+                const loader = document.getElementById('loader');
+                loader.style.visibility = 'hidden';
+            });
 	</script>
     </body>
 </html> 
