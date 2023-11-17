@@ -108,11 +108,16 @@
 	var mars = new CelestialBody(new THREE.SphereGeometry(0.15	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/mars.jpg')}), {speed:0.3,distance: 4.4,speedRotation:0.7,excentricity:0.093},sun,'mars')
 	var jupiter = new CelestialBody(new THREE.SphereGeometry(0.38,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/jupiter.jpg')}), {speed:0.1,distance: 7.2,speedRotation:0.18,excentricity:0.048},sun,'jupiter')
 	var saturn = new CelestialBody(new THREE.SphereGeometry(0.35,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/saturn.jpg')}), {speed:0.05,distance: 8.6,speedRotation:0.3,excentricity:0.054},sun,'saturn')
-	var titan = new CelestialBody(new THREE.SphereGeometry(0.05,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/titan.jpg')}), {speed:1.6,distance: 0.7,speedRotation:0.4,excentricity:0.0288},saturn,'titan')
+	var titan = new CelestialBody(new THREE.SphereGeometry(0.05,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/titan.jpg')}), {speed:1.6,distance: 1,speedRotation:0.4,excentricity:0.0288},saturn,'titan')
 	var uranus = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/uranus.jpg')}), {speed:-0.08,distance: 10,speedRotation:0.5,excentricity:0.047},sun,'uranus')
 	var neptune = new CelestialBody(new THREE.SphereGeometry(0.2,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/neptune.jpg')}), {speed:0.03,distance: 11.1,speedRotation:0.7,excentricity:0.008},sun,'neptune')
 	var moon = new CelestialBody(new THREE.SphereGeometry(0.05	,128,128),new THREE.MeshLambertMaterial({map: loader.load('texture/moon.jpg')}), {speed:3.4,distance: 0.45,speedRotation:3.4,excentricity:0.0549},earth,'moon')
 	//liste de noms des planetes et des satellite pour appliquer les fonctions moins répitivement.
+
+
+// Supposons que vous ayez déjà une instance de la planète Saturne nommée 'saturne'
+// Vous pouvez récupérer sa position et créer les particules autour de celle-ci
+
 	const planetName = [mercure,venus,earth,mars,jupiter,saturn,uranus,neptune,moon,titan]
 	const satelliteName = [moon,titan]
 
@@ -212,15 +217,41 @@
 
 	    asteroidBelt2.add(asteroid);
 }
+const ringTexture = new THREE.TextureLoader().load('texture/saturn_ring.png');
+const ringMaterial = new THREE.MeshBasicMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+
+// Création de la géométrie de l'anneau avec les dimensions spécifiées
+const ringGeometry = new THREE.RingBufferGeometry(0.2, 0.9, 64);
+
+// Ajustement des coordonnées UV de la texture
+var pos = ringGeometry.attributes.position;
+var v3 = new THREE.Vector3();
+for (let i = 0; i < pos.count; i++) {
+    v3.fromBufferAttribute(pos, i);
+    ringGeometry.attributes.uv.setXY(i, v3.length() < 0.25 ? 0 : 1, 1); // Ajustez ces valeurs selon votre besoin
+}
+
+// Création de l'objet mesh représentant l'anneau
+const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+
+// Positionnement de l'anneau autour de Saturne
+ring.position.set(saturn.body.position.x, saturn.body.position.y, saturn.body.position.z);
+
+// Réglage de la rotation pour afficher l'anneau de côté
+ring.rotation.x = Math.PI / 2 +0.3; // Faites pivoter l'anneau de 90 degrés sur l'axe X
+
+scene.add(ring);
+
+
 
 scene.add(asteroidBelt2);
+
 
 // Désactivez la rotation automatique (si vous le souhaitez)
 	function render() {
 	requestAnimationFrame( render );
-
-	
-	
+	ring.position.set(saturn.body.position.x, saturn.body.position.y, saturn.body.position.z);
+	ring.rotation.x = Math.PI / 2 +0.3 + saturn.body.rotation.z; // Faites pivoter l'anneau de 90 degrés sur l'axe X
 
     if (focusedPlanet) {
         // Si une planète est centrée, suivez sa position
