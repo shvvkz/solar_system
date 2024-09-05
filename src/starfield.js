@@ -8,46 +8,49 @@ class Starfield {
     }
 
     randomSpherePoint() {
-        // Augmentation de la zone, par exemple, entre 100 et 200 unités
-        const radius = Math.random() * 20 + 200; // Générer entre 100 et 200 pour des étoiles plus éloignées
+        const radius = Math.random() * 20 + 200; // Stars at random distances
         const u = Math.random();
         const v = Math.random();
         const theta = 2 * Math.PI * u;
         const phi = Math.acos(2 * v - 1);
-        let x = radius * Math.sin(phi) * Math.cos(theta);
-        let y = radius * Math.sin(phi) * Math.sin(theta);
-        let z = radius * Math.cos(phi);
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
 
-        return {
-            pos: new THREE.Vector3(x, y, z),
-            hue: 0.6, // Couleur basée sur le rayon
-            minDist: radius, // Distance de l'étoile pour référence
-        };
+        return new THREE.Vector3(x, y, z);
     }
 
     createStarfield() {
         const verts = [];
-        const colors = [];
-        const positions = [];
-        let col;
+        const colorsArray = [];
+        const hexColors = [
+            "#9bb0ff", "#aabfff", "#cad7ff", "#f8f7ff", "#fff4ea", 
+            "#ffddb4", "#ffcc6f", "#ffc07f", "#ff8000", "#ffd27f", 
+            "#ffffff", "#ffecd0", "#ffb07c"
+        ];
+
         for (let i = 0; i < this.numStars; i += 1) {
-            let p = this.randomSpherePoint();
-            const { pos, hue } = p;
-            positions.push(p);
-            col = new THREE.Color().setHSL(hue, 0.2, Math.random());
+            const pos = this.randomSpherePoint();
             verts.push(pos.x, pos.y, pos.z);
-            colors.push(col.r, col.g, col.b);
+
+            // Randomly select a color from the list
+            const hexColor = hexColors[Math.floor(Math.random() * hexColors.length)];
+            const color = new THREE.Color(hexColor);
+            colorsArray.push(color.r, color.g, color.b);
         }
+
         const geo = new THREE.BufferGeometry();
         geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-        geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+        geo.setAttribute("color", new THREE.Float32BufferAttribute(colorsArray, 3));
+
         const mat = new THREE.PointsMaterial({
             size: this.size,
-            vertexColors: true,
+            vertexColors: true,  // Enable per-vertex colors
             map: new THREE.TextureLoader().load("./src/circle.png"),
+            transparent: true
         });
-        const points = new THREE.Points(geo, mat);
-        return points;
+
+        return new THREE.Points(geo, mat);
     }
 }
 

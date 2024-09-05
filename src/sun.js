@@ -63,13 +63,19 @@ class Sun {
         const sunGlow = new THREE.Mesh(geo, customMaterial);
         this.mesh.add(sunGlow);
 
-        const sunLight = new THREE.PointLight(0xffffff, 200);
+        const sunLight = new THREE.PointLight(0xffffff, 1, 100, 0);  // Distance is 5000, decay set to 0 for no decay over range
+        sunLight.intensity = 2;  // Set the intensity to 200
+        sunLight.distance = 100;  // Light will reach up to 5000 units
+        sunLight.decay = 0;  // No decay over distance, so intensity stays strong until distance limit
         sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 1024;  // Taille de la texture de l'ombre
+        sunLight.shadow.mapSize.width = 1024;
         sunLight.shadow.mapSize.height = 1024;
-        sunLight.shadow.camera.near = 0.5;    // Distance minimale de la caméra de l'ombre
-        sunLight.shadow.camera.far = 500;     // Distance maximale de la caméra de l'ombre
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 100;  // Shadows extend up to 5000 units
+        
         this.mesh.add(sunLight);
+        
+        
 
         this.mesh.userData.update = (t) => {
             this.mesh.rotation.y = t;

@@ -25,6 +25,9 @@ class Planet {
         this.ellipseGeometry = null;
         this.ellipsePoints = [];
 
+        // Référence pour l'anneau de la planète
+        this.ring = null;
+
         // Pour permettre à la planète d'être mise à jour constamment
         this.mesh.userData.update = (t) => this.update(t);
     }
@@ -32,10 +35,17 @@ class Planet {
     createPlanet() {
         const path = `./textures/${this.img}`;
         const map = this.texLoader.load(path);
-        const planetMat = new THREE.MeshStandardMaterial({ map });
+        
+        const planetMat = new THREE.MeshStandardMaterial({ 
+            map, 
+            metalness: 0,  // Keep metalness low to avoid strong reflections
+            roughness: 0.8,  // Increase roughness for less reflectivity
+            emissive: new THREE.Color(0x000000),  // Ensure no emissive color
+            emissiveIntensity: 0.05,  // Optional: Slight glow if needed
+        });
+        
         const planet = new THREE.Mesh(this.geo, planetMat);
-
-        // Calculer la position initiale de la planète avec l'angle de départ aléatoire
+    
         const x = Math.cos(this.initialAngle) * this.semiMajorAxis - this.focalDistance + this.parent.position.x;
         const z = Math.sin(this.initialAngle) * this.semiMinorAxis + this.parent.position.z;
         
@@ -43,6 +53,7 @@ class Planet {
         planet.scale.setScalar(this.size);
         return planet;
     }
+    
 
     update(t) {
         // Calculer l'angle en fonction du temps
@@ -73,6 +84,11 @@ class Planet {
         // Mise à jour de l'ellipse si elle est déjà créée
         if (this.ellipseGeometry) {
             this.updateEllipsePoints();
+        }
+
+        // Mise à jour de l'anneau si existant
+        if (this.ring) {
+            this.updateRing();
         }
     }
 
@@ -105,7 +121,7 @@ class Planet {
         this.ellipseGeometry.setAttribute('position', new THREE.BufferAttribute(this.ellipsePoints, 3));
 
         // Crée un matériau basique pour la ligne
-        const ellipseMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+        const ellipseMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, fog: false, linewidth: 100 });
 
         // Crée une ligne avec la géométrie et le matériau
         const ellipse = new THREE.Line(this.ellipseGeometry, ellipseMaterial);
@@ -133,6 +149,55 @@ class Planet {
         // Mettre à jour l'attribut de position de la géométrie
         this.ellipseGeometry.attributes.position.needsUpdate = true;
     }
+    drawRing(scene, ringTexture, innerRadius = 3, outerRadius = 5) {
+        // Use THREE.RingGeometry instead of RingBufferGeometry
+        const geometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
+    
+        // Modify the UV mapping to properly align the texture
+        const pos = geometry.attributes.position;
+        const v3 = new THREE.Vector3();
+        
+        for (let i = 0; i < pos.count; i++) {
+            v3.fromBufferAttribute(pos, i);
+            geometry.attributes.uv.setXY(i, v3.length() < (innerRadius + outerRadius) / 2 ? 0 : 1, 1);
+        }
+    
+        // Create the material with the ring texture, making sure it's transparent
+        const material = new THREE.MeshBasicMaterial({
+            map: ringTexture,
+            side: THREE.DoubleSide,
+            transparent: true
+        });
+    
+        // Create the mesh and position it at the planet's location
+        const ringMesh = new THREE.Mesh(geometry, material);
+        ringMesh.position.copy(this.mesh.position);
+        ringMesh.rotation.x = THREE.MathUtils.degToRad(90); // Align the ring flat horizontally
+    
+        // Add the ring to the scene
+        scene.add(ringMesh);
+        this.ring = ringMesh; // Store the reference for updates
+    }
+    
+    updateRing() {
+        if (!this.ring) return;
+        this.ring.position.copy(this.mesh.position);
+    }
+    
+    centerOn(camera, controls) {
+        const planetPosition = this.mesh.position.clone();
+        
+        const direction = new THREE.Vector3().subVectors(camera.position, planetPosition).normalize();
+
+        const distance = 4 * this.size; 
+        const newCameraPosition = planetPosition.clone().add(direction.multiplyScalar(distance));
+    
+        camera.position.copy(newCameraPosition);
+        controls.target.copy(planetPosition);
+        controls.update();
+    } 
+    
+
 }
 
 export { Planet };

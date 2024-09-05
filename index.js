@@ -6,18 +6,19 @@ import { UnrealBloomPass } from 'jsm/postprocessing/UnrealBloomPass.js';
 import { Planet } from "./src/planet.js";
 import { Starfield } from "./src/starfield.js";
 import { Sun } from "./src/sun.js";
-import getNebula from "./src/getNebula.js";
-import getAsteroidBelt from "./src/getAsteroidBelt.js";
 import { OBJLoader } from 'jsm/loaders/OBJLoader.js';
+import { AsteroidBelt } from './src/asteroidbelt.js';
+import getNebula from './src/getNebula.js';
 
 const w = window.innerWidth;
 const h = window.innerHeight;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
 camera.position.set(0, 2.5, 4);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(w, h);
-renderer.shadowMap.enabled = true;  // Activer les ombres
+renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
@@ -29,7 +30,6 @@ const composer = new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-// Ajoutez l'effet de bloom
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 1.5, 0.4, 0.85);
 composer.addPass(bloomPass);
 
@@ -40,7 +40,7 @@ solarSystem.userData.update = (t) => {
     });
 };
 scene.add(solarSystem);
-/* Fake object in a way for planets to be placed well*/
+
 const fake_sun_for_earth = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
 fake_sun_for_earth.position.set(0.5, 0, 0);
 const fake_sun_for_mars = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
@@ -51,21 +51,18 @@ const fake_sun_for_mercury = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), n
 fake_sun_for_mercury.position.set(-0.1, 0, 0);
 const fake_sun_for_jupiter = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
 fake_sun_for_jupiter.position.set(1, 0, 0);
+const fake_sun_for_saturn = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+fake_sun_for_saturn.position.set(1.5, 0, 0);
+const fake_sun_for_uranus = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+fake_sun_for_uranus.position.set(0.3, 0, 0);
+const fake_sun_for_belt = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+fake_sun_for_belt.position.set(-6, 0, 0);
+
+
+
 
 const sun = new Sun(2);
 solarSystem.add(sun.mesh);
-//faire un mesh invisible mais avec des coordonnées pour le soleil
-/*
-Mercury: 7.0°
-Venus: 3.4°
-Earth: 0° (by definition, as the reference point)
-Mars: 1.85°
-Jupiter: 1.3°
-Saturn: 2.5°
-Uranus: 0.8°
-Neptune: 1.8°
-Pluto (dwarf planet): 17.2° (not technically a planet, but its inclination is significant)
-*/
 
 const earth = new Planet({ parent: fake_sun_for_earth, semiMajorAxis:12.5, semiMinorAxis:12.4, img: 'earth.jpg', size: 0.3, orbitSpeed: 1.0, rotationSpeed: 1, inclination: 0 });
 earth.drawEllipse(solarSystem);
@@ -91,32 +88,140 @@ const jupiter = new Planet({ parent: fake_sun_for_jupiter, semiMajorAxis:35, sem
 jupiter.drawEllipse(solarSystem);
 solarSystem.add(jupiter.mesh);
 
+const saturnRingColorTexture = new THREE.TextureLoader().load('./textures/saturnringcolor.jpg');
+const saturn = new Planet({ parent: fake_sun_for_saturn, semiMajorAxis:45, semiMinorAxis:44, img: 'saturn.jpg', size: 0.7, orbitSpeed: 0.1, rotationSpeed: 0.1, inclination: 2.5 });
+saturn.drawEllipse(solarSystem);
+saturn.drawRing(scene, saturnRingColorTexture, 1.0, 2.8);
+solarSystem.add(saturn.mesh);
 
-
+const uranusRingColorTexture = new THREE.TextureLoader().load('./textures/uranusringcolor.png');
+const uranus = new Planet({ parent: fake_sun_for_uranus, semiMajorAxis:55, semiMinorAxis:54, img: 'uranus.jpg', size: 0.6, orbitSpeed: 0.05, rotationSpeed: 0.05, inclination: 0.8 });
+uranus.drawEllipse(solarSystem);
+uranus.drawRing(scene, uranusRingColorTexture, 1.35, 1.8);
+solarSystem.add(uranus.mesh);
 
 const debugLight = new THREE.DirectionalLight(0xffffff, 1);
 debugLight.position.set(0, 1, 0);
 // scene.add(debugLight);
 
-const starfield = new Starfield({ numStars: 20000, size: 0.05 });
+const starfield = new Starfield({ numStars: 1000, size: 0.05 });
 scene.add(starfield.mesh);
+
+const nebula = getNebula({
+    hue: 0.6,
+    numSprites: 10,
+    opacity: 0.02,
+    radius: 210,
+    size: 340,
+    z: -300.5,
+  });
+  scene.add(nebula);
+
+  const anotherNebula = getNebula({
+    hue: 0.0,
+    numSprites: 10,
+    opacity: 0.02,
+    radius: 160,
+    size: 250,
+    z: 300.5,
+  });
+  scene.add(anotherNebula);
+
+// Asteroid belt
+const asteroidFiles = ['Rock1.obj', 'Rock2.obj', 'Rock3.obj'];
+const objLoader = new OBJLoader();
+var asteroidObjs = [];
+let loaded = 0;
+asteroidFiles.forEach((file) => {
+    objLoader.load(`../rocks/${file}`, (obj) => {
+        obj.traverse((child) => {
+            if (child.isMesh) {
+                asteroidObjs.push(child);
+            }
+        });
+        loaded++;
+        if (loaded === asteroidFiles.length) {
+            console.log("on est dedans");
+            const asteroidBelt = new AsteroidBelt(fake_sun_for_belt, asteroidObjs, 28, 25, 0.075, 8.5, 0.5);
+            scene.add(asteroidBelt.group);
+        }
+    });
+});
+
+let selectedPlanet = null;
+let isCameraCentered = false;
 
 function animate(t = 0) {
     const time = t * 0.0002;
     requestAnimationFrame(animate);
 
+    // Update the solar system
     solarSystem.userData.update(time);
-    composer.render(); // Utiliser composer au lieu de renderer pour les effets de post-traitement
+    if (isCameraCentered) {
+        if (selectedPlanet)
+            selectedPlanet.centerOn(camera, controls);
+    }
+    // Render the scene
+    composer.render();
+
+    // Update OrbitControls to ensure smooth camera movement
     controls.update();
 }
 
-
 animate();
+// Liste des planètes
+const planets = {
+    'sun': sun,
+    'moon': moon,
+    'earth': earth,
+    'mars': mars,
+    'venus': venus,
+    'mercury': mercury,
+    'jupiter': jupiter,
+    'saturn': saturn,
+    'uranus': uranus
+};
+
+
+// Créer un menu pour sélectionner les planètes
+const planetSelect = document.createElement('select');
+planetSelect.id = 'planet-select';
+document.body.appendChild(planetSelect);
+// Ajouter une option pour chaque planète dans le menu
+for (const planetName in planets) {
+    const option = document.createElement('option');
+    option.value = planetName;
+    option.text = planetName.charAt(0).toUpperCase() + planetName.slice(1);
+    planetSelect.appendChild(option);
+}
+
+planetSelect.addEventListener('change', (event) => {
+    const selectedPlanetName = event.target.value;
+    selectedPlanet = planets[selectedPlanetName];
+
+    if (selectedPlanetName === 'sun') {
+        selectedPlanet = null;
+        isCameraCentered = false;
+        camera.position.set(0, 2.5, 4);
+        controls.target.set(0, 0, 0);
+        controls.update();
+        console.log(isCameraCentered)
+    } else if (selectedPlanet) {
+        selectedPlanet.centerOn(camera, controls);  // Move camera to the selected planet
+        isCameraCentered = true;
+    }
+
+    isCameraCentered = true;  // Mark that the camera has been centered once
+});
+
 
 function handleWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight); // Assurez-vous que le composer est redimensionné
+    composer.setSize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', handleWindowResize, false);
+
+
+
